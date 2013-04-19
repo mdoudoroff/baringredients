@@ -70,7 +70,7 @@ jQuery(document).ready(function() {
 					for (var i = 0; i < msg.length; i++) {
 						if (msg[i].name.toLowerCase().indexOf(searchStrLeadTerm)===0) {
 							counter += 1;
-							searchResults.append($('<li><a tabindex="-1" href="/tree/ing-'+msg[i].iid+'.html">'+msg[i].name+' <span class="context">'+msg[i].context+'</span></a></li>'));
+							searchResults.append($('<li><a tabindex="-1" href="/ing-'+msg[i].iid+'.html">'+msg[i].name+' <span class="context">'+msg[i].context+'</span></a></li>'));
 						}
 					}
 
@@ -84,11 +84,11 @@ jQuery(document).ready(function() {
 						if (counter > 10) {
 							break;
 						}
-						searchResults.append($('<li><a tabindex="-1" href="/tree/ing-'+msg[i].iid+'.html">'+msg[i].name+' <span class="context">'+msg[i].context+'</span></a></li>'));
+						searchResults.append($('<li><a tabindex="-1" href="/ing-'+msg[i].iid+'.html">'+msg[i].name+' <span class="context">'+msg[i].context+'</span></a></li>'));
 						counter += 1;
 					}
 					if (msg.length > 10) {
-						searchResults.append($('<li class="divider"></li><li><a tabindex="-1" href="/tree/index.html?q='+encodeURIComponent(searchStr)+'"><em>... and '+(msg.length-10)+' more</em></a></li>'));
+						searchResults.append($('<li class="divider"></li><li><a tabindex="-1" href="/index.html?q='+encodeURIComponent(searchStr)+'"><em>... and '+(msg.length-10)+' more</em></a></li>'));
 					}
 
 					searchResults.show();

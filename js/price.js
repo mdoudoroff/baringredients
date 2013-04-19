@@ -61,12 +61,12 @@ jQuery(document).ready(function() {
 
 					for (var i = 0; i < 10; i++) {
 						if (i < msg.length) {
-							searchResults.append($('<li><a tabindex="-1" href="/tree/ing-'+msg[i].iid+'.html">'+msg[i].name+' ('+msg[i].context+')</a></li>'));
+							searchResults.append($('<li><a tabindex="-1" href="/ing-'+msg[i].iid+'.html">'+msg[i].name+' ('+msg[i].context+')</a></li>'));
 						}
 
 					}
 					if (msg.length > 10) {
-						searchResults.append($('<li class="divider"></li><li><a tabindex="-1" href="/tree/index.html?q='+encodeURIComponent(searchStr)+'"><em>... and '+(msg.length-10)+' more</em></a></li>'));
+						searchResults.append($('<li class="divider"></li><li><a tabindex="-1" href="/index.html?q='+encodeURIComponent(searchStr)+'"><em>... and '+(msg.length-10)+' more</em></a></li>'));
 					}
 					searchResults.append($('</ul>'));
 					searchResults.show();
