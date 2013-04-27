@@ -198,3 +198,12 @@ footer {
   right: 0;
   top: 0;
 }
+tr.section {
+  background-color: none;
+  border: none;
+}
+tr.section td {
+  padding-left: 0;
+  color: #aaa;
+  border: none;
+}
