@@ -7,10 +7,8 @@
 /*global activeCountryIDs */
 /*global activeSpecialRegions */
 
-
 // @codekit-prepend "d3.layout.cloud.js";
 // @codekit-prepend "tsv.js";
-// @codekit-prepend "map.js";
 
 var searchPrompt = 'Search by ingredient name...';
 
@@ -70,7 +68,7 @@ jQuery(document).ready(function() {
 					for (var i = 0; i < msg.length; i++) {
 						if (msg[i].name.toLowerCase().indexOf(searchStrLeadTerm)===0) {
 							counter += 1;
-							searchResults.append($('<li><a tabindex="-1" href="/ing-'+msg[i].iid+'.html">'+msg[i].name+' <span class="context">'+msg[i].context+'</span></a></li>'));
+							searchResults.append($('<li><a tabindex="-1" href="/i/'+msg[i].iid+'.html">'+msg[i].name+' <span class="context">'+msg[i].context+'</span></a></li>'));
 						}
 					}
 
@@ -84,7 +82,7 @@ jQuery(document).ready(function() {
 						if (counter > 10) {
 							break;
 						}
-						searchResults.append($('<li><a tabindex="-1" href="/ing-'+msg[i].iid+'.html">'+msg[i].name+' <span class="context">'+msg[i].context+'</span></a></li>'));
+						searchResults.append($('<li><a tabindex="-1" href="/i/'+msg[i].iid+'.html">'+msg[i].name+' <span class="context">'+msg[i].context+'</span></a></li>'));
 						counter += 1;
 					}
 					if (msg.length > 10) {
@@ -215,7 +213,7 @@ jQuery(window).load(function() {
 
 		d3.layout.cloud().size([divwidth, 600])
 			.words(terms.map(function(d) {
-				return {text: d, size: 10 + ingredientAffinities[d][0] * 90 / 100, iid:ingredientAffinities[d][1], groupIdx:ingredientAffinities[d][2], color:ingFill(ingredientAffinities[d][2]), link:'ing-'+ingredientAffinities[d][1]+'.html'};
+				return {text: d, size: 10 + ingredientAffinities[d][0] * 90 / 100, iid:ingredientAffinities[d][1], groupIdx:ingredientAffinities[d][2], color:ingFill(ingredientAffinities[d][2]), link:'/i/'+ingredientAffinities[d][1]+'.html'};
 			}))
 			.rotate(function() { return ~~(Math.random() * 2) * 0; })
 			.font("Helvetica")
@@ -248,7 +246,7 @@ jQuery(window).load(function() {
 
 		d3.layout.cloud().size([divwidth, 600])
 			.words(terms.map(function(d) {
-				return {text: d, size: 10 + flavorAffinities[d][0] * 90 / 100, iid:flavorAffinities[d][1], groupIdx:flavorAffinities[d][2], color:flavFill(flavorAffinities[d][2]), link:'flavor-'+flavorAffinities[d][1]+'.html'};
+				return {text: d, size: 10 + flavorAffinities[d][0] * 90 / 100, iid:flavorAffinities[d][1], groupIdx:flavorAffinities[d][2], color:flavFill(flavorAffinities[d][2]), link:'/f/'+flavorAffinities[d][1]+'.html'};
 			}))
 			.rotate(function() { return ~~(Math.random() * 2) * 0; })
 			.font("Helvetica")
@@ -316,7 +314,7 @@ jQuery(window).load(function() {
 			while (picsToLoad > 0 && availablePictures.length > 0) {
 				var d = availablePictures.shift();
 				if (d.name.length>0) {
-					img = $('<div class="polaroid"><a href="ing-'+d.id+'.html"><img src="http://ingr-photos.s3.amazonaws.com/'+d.fn+'" height="180" /><p>'+d.name+'</p></a></div>');
+					img = $('<div class="polaroid"><a href="/i/'+d.id+'.html"><img src="http://ingr-photos.s3.amazonaws.com/'+d.fn+'" height="180" /><p>'+d.name+'</p></a></div>');
 				} else {
 					img = $('<div class="polaroid"><a href="http://ingr-photos.s3.amazonaws.com/'+d.fn+'"><img src="http://ingr-photos.s3.amazonaws.com/'+d.fn+'" height="180" /></a></div>');
 				}
@@ -339,9 +337,9 @@ jQuery(window).load(function() {
 	}
 
 	// == Construct map
-	if (typeof activeCountryIDs === 'object' && activeCountryIDs.length>0 || typeof activeSpecialRegions === 'object' && activeSpecialRegions.length>0) {
-		buildMap(activeCountryIDs,activeSpecialRegions);
-	}
+	//if (typeof activeCountryIDs === 'object' && activeCountryIDs.length>0 || typeof activeSpecialRegions === 'object' && activeSpecialRegions.length>0) {
+	//	buildMap(activeCountryIDs,activeSpecialRegions);
+	//}
 
 
 });

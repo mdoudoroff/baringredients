@@ -52,63 +52,75 @@ footer {
 #closingMetadata {
   text-align: right;
 }
+/*
 #map {
   max-height: 570px;
   overflow: hidden;
+
+  rect {
+    fill: #eee;
+  }
+
+  .feature {
+    fill: #ddd;
+    cursor: pointer;
+    stroke: none;
+  }
+
+  .mesh {
+    fill: none;
+    stroke: #000;
+    stroke-width: .25px;
+    stroke-linejoin: round;
+  }
+
+  .feature.glow {
+    fill: orange;
+  }
+
+  .country-label {
+    font-size: 20px;
+    font-style: italic;
+    fill: #f00;
+    opacity: 0.4;
+    text-transform: uppercase;
+  }
+
+  .region {
+    stroke: #bbb;
+    stroke-width: 2px;
+    stroke-dasharray: 2,2;
+    stroke-linejoin: round;
+    fill: rgba(0,0,0,0.1);
+    cursor: pointer;
+  }
+
+  .region.glow {
+    stroke: yellow;
+    fill: rgba(255,255,0,0.4);
+  }
+
+  .region-label {
+    font-size: 14px;
+    fill: black;
+    opacity: 1;
+  }
+
+  .tooltip {   
+    position: absolute;           
+    text-align: center;           
+    width: 60px;                  
+    height: 28px;                 
+    padding: 2px;             
+    font: 12px sans-serif;        
+    background: lightsteelblue;   
+    border: 0px;      
+    border-radius: 8px;           
+    pointer-events: none;         
+  }
+
 }
-#map rect {
-  fill: #eee;
-}
-#map .feature {
-  fill: #ddd;
-  cursor: pointer;
-  stroke: none;
-}
-#map .mesh {
-  fill: none;
-  stroke: #000;
-  stroke-width: .25px;
-  stroke-linejoin: round;
-}
-#map .feature.glow {
-  fill: orange;
-}
-#map .country-label {
-  font-size: 20px;
-  font-style: italic;
-  fill: #f00;
-  opacity: 0.4;
-  text-transform: uppercase;
-}
-#map .region {
-  stroke: #bbb;
-  stroke-width: 2px;
-  stroke-dasharray: 2,2;
-  stroke-linejoin: round;
-  fill: rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-}
-#map .region.glow {
-  stroke: yellow;
-  fill: rgba(255, 255, 0, 0.4);
-}
-#map .region-label {
-  font-size: 14px;
-  fill: black;
-  opacity: 1;
-}
-#map .tooltip {
-  position: absolute;
-  text-align: center;
-  width: 60px;
-  height: 28px;
-  padding: 2px;
-  font: 12px sans-serif;
-  background: lightsteelblue;
-  border: 0px;
-  border-radius: 8px;
-  pointer-events: none;
-}
+*/
 #topphotos {
   min-height: 235px;
   position: relative;

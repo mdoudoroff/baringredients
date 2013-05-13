@@ -61,7 +61,7 @@ jQuery(document).ready(function() {
 
 					for (var i = 0; i < 10; i++) {
 						if (i < msg.length) {
-							searchResults.append($('<li><a tabindex="-1" href="/ing-'+msg[i].iid+'.html">'+msg[i].name+' ('+msg[i].context+')</a></li>'));
+							searchResults.append($('<li><a tabindex="-1" href="/i/'+msg[i].iid+'.html">'+msg[i].name+' ('+msg[i].context+')</a></li>'));
 						}
 
 					}
