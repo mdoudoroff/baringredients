@@ -49,3 +49,22 @@ footer {
     width: 140px;
   }
 }
+.rLineContainer {
+  margin-bottom: 9px;
+}
+.rContextContainer {
+  margin-bottom: 9px;
+}
+.rContextContainer {
+  position: relative;
+}
+.rContextDelete {
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+#inputFeedback {
+  margin-top: 36px;
+  font-family: Menlo, mono;
+  font-size: 11px;
+}
