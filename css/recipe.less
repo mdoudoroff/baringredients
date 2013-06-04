@@ -18,16 +18,40 @@
 
 .rContextContainer {
 	position: relative;
+	background-color:#eee;
+	border-radius:9px;
+	padding: 18px;
+}
+
+.rContextContainer.focused {
+	//border: 2px solid #ccc;
+	box-shadow: inset 0 0 5px #888;
+}
+
+.rContextContainer h4 {
+	margin-top:0;
+}
+
+#addContexts {
+	position: relative;
+	background-color:#eee;
+	border-radius:9px;
+	padding: 18px;
 }
 
 .rContextDelete {
 	position: absolute;
-	right:0;
-	top:0;
+	right:9px;
+	top:9px;
 }
 
 #inputFeedback {
 	margin-top:36px;
 	font-family: Menlo, mono;
 	font-size: 11px;
+}
+
+#rAssembly {
+	padding: 9px 0 18px 0;
+	margin: 9px 0 36px 0;
 }

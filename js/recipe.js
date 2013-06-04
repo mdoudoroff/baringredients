@@ -1,4 +1,6 @@
 // @codekit-prepend "jquery.caret.js";
+/*global log */
+/*global console */
 
 window.log = function(){
   log.history = log.history || [];   // store logs to an array for reference
@@ -13,21 +15,36 @@ function fixEncoding(s) {
 	return s;
 }
 
+function getQueryVariable(variable)
+{
+       var query = window.location.search.substring(1);
+       var vars = query.split("&");
+       for (var i=0;i<vars.length;i++) {
+               var pair = vars[i].split("=");
+               if(pair[0] == variable){return pair[1];}
+       }
+       return(false);
+}
+
 var keycodesToIgnore = [37,38,39,40];
 
-// == RECIPE
-var recipeAssembly = [{"context":"mixing glass"}];
-recipeAssembly[0].components = [
-	{"context":"mixing glass", "modifiers": [], "ingredients": [556], "rawText":"1 oz gin", "rendering": "add 1.0 oz gin", "valid": true, "measure": "1 oz", "type": "AddMeasureOfIngredient"},
-	{"context":"mixing glass", "modifiers": [], "ingredients": [556], "rawText":"1 oz campari", "rendering": "add 1.0 oz Campari", "valid": true, "measure": "1 oz", "type": "AddMeasureOfIngredient"},
-	{"context":"mixing glass", "modifiers": [], "ingredients": [556], "rawText":"1 oz red vermouth", "rendering": "add 1.0 oz red vermouth", "valid": true, "measure": "1 oz", "type": "AddMeasureOfIngredient"}
-	];
+var SAMPLE_RECIPE = '{"title":"Negroni","assembly":[{"context":"mixing glass","components":[{"context":"mixing glass","modifiers":[],"ingredients":[556],"rawText":"1 oz gin","rendering":"add 1.0 oz gin","valid":true,"measure":"1 oz","type":"AddMeasureOfIngredient"},{"context":"mixing glass","modifiers":[],"ingredients":[556],"rawText":"1 oz campari","rendering":"add 1.0 oz Campari","valid":true,"measure":"1 oz","type":"AddMeasureOfIngredient"},{"context":"mixing glass","modifiers":[],"ingredients":[556],"rawText":"1 oz red vermouth","rendering":"add 1.0 oz red vermouth","valid":true,"measure":"1 oz","type":"AddMeasureOfIngredient"},{"rawText":"add ice","modifiers":[],"ingredients":[1076],"rendering":"add ice","valid":true,"measure":"[UNDEFINED]","type":"AddUnmeasuredIngredient"},{"rawText":"stir","rendering":"stir","valid":true,"type":"stir"},{"rawText":"strain","rendering":"strain into serving vessel(s)","valid":true,"type":"strain"}]},{"context":"serving vessel","components":[{"rawText":"garnish with an orange wheel","modifiers":[],"ingredients":[1070],"rendering":"garnish with orange wheel","valid":true,"measure":"1","type":"GarnishWith"}]}],"servingVessel":"cocktail glass"}';
 
+// == RECIPE
+
+var recipeID = '';
+var recipeTitle = '(untitled)';
+var recipeAssembly = [];
+var intendedServingVessel = 'cocktail glass';
 var lineIDCounter = 0;
+var focusedContextIdx;  // this is an uncouth global... not sure what to do about it yet
+var contextIdx;
+var isModeEdit = false;
 
 function renderContexts() {
 
-	$('#recipeContainer').empty();
+	$('#rAssembly').empty();
+	isModeEdit = false;
 
 	for (var idx=0; idx < recipeAssembly.length; idx++) {
 
@@ -35,11 +52,15 @@ function renderContexts() {
 		var components = context.components;
 
 		var contextContainer = $('<div id="rContextContainer'+idx+'" class="rContextContainer"></div>');
-		$('#recipeContainer').append(contextContainer);
+		$('#rAssembly').append(contextContainer);
 
-		contextContainer.append($('<h3>'+context.context+'</h3>'));
+		if (context.context!=='serving vessel') {
+			contextContainer.append($('<h4>'+context.context+'</h4>'));	
+		} else {
+			contextContainer.append($('<h4>'+intendedServingVessel+'</h4>'));
+		}
 
-		var deleteButton = $('<span id="delContext'+idx+'" data-cidx="'+idx+'" class="btn rContextDelete">X</span>');
+		var deleteButton = $('<span id="delContext'+idx+'" data-cidx="'+idx+'" class="btn btn-link rContextDelete">X</span>');
 		contextContainer.append(deleteButton);
 
 		for (var componentIdx=0; componentIdx < components.length; componentIdx++ ) {
@@ -65,19 +86,88 @@ function renderContexts() {
 			if (component.valid) {
 				lineForm.hide();
 			}
-
 		}
-		var addLineButton = $('<span id="addButton'+idx+'" data-cidx="'+idx+'" class="btn btn-primary rAddLineButton">Add line</span>');
-		contextContainer.append(addLineButton);
+
+		// context-actions
+		var contextBottomControls = $('<div id="contextControlsBottom'+idx+'"></div>');
+		contextContainer.append(contextBottomControls);
+
+		var addLineButton = $('<span id="addButton'+idx+'" data-cidx="'+idx+'" class="btn rAddLineButton">Add line</span>');
+		contextBottomControls.append(addLineButton);
+		contextContainer.click(function() {
+			contextFocus = $(this);
+			$('.rAddLineButton').removeClass('btn-primary');
+			$('.rContextContainer').removeClass('focused');
+			$(this).find('.rAddLineButton').addClass('btn-primary');
+			$(this).addClass('focused');
+		});
+
+		// == macros ==
+		contextBottomControls.append('<button class="btn btn-link" disabled="disabled">or append:</button>');
+		var macroButtonGroup;
+		var macroButtonSubOptions;
+		macroButtonGroup = $('<div class="btn-group"></div>');
+		contextBottomControls.append(macroButtonGroup);
+		macroButtonGroup.append($('<span data-cidx="'+idx+'" data-str="add ice" class="btn strMacro">Add ice</span>'));
+		macroButtonGroup.append('<button class="btn dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>');
+		macroButtonSubOptions = $('<ul class="dropdown-menu"></ul>');
+		macroButtonSubOptions.append($('<li><a tabindex="-1" data-cidx="'+idx+'" class="strMacro" data-str="add cracked ice" href="#">add cracked ice</a></li>'));
+		macroButtonSubOptions.append($('<li><a tabindex="-1" data-cidx="'+idx+'" class="strMacro" data-str="add crushed ice" href="#">add crushed ice</a></li>'));
+		macroButtonSubOptions.append($('<li><a tabindex="-1" data-cidx="'+idx+'" class="strMacro" data-str="add big ice" href="#">add big ice</a></li>'));
+		macroButtonGroup.append(macroButtonSubOptions);
+
+		macroButtonGroup = $('<div class="btn-group"></div>');
+		contextBottomControls.append(macroButtonGroup);
+		macroButtonGroup.append($('<span data-cidx="'+idx+'" data-str="shake" class="btn strMacro">Shake</span>'));
+		macroButtonGroup.append('<button class="btn dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>');
+		macroButtonSubOptions = $('<ul class="dropdown-menu"></ul>');
+		macroButtonSubOptions.append($('<li><a tabindex="-1" data-cidx="'+idx+'" class="strMacro" data-str="dry shake" href="#">dry shake</a></li>'));
+		macroButtonSubOptions.append($('<li><a tabindex="-1" data-cidx="'+idx+'" class="strMacro" data-str="roll" href="#">roll</a></li>'));
+		macroButtonGroup.append(macroButtonSubOptions);
+
+		contextBottomControls.append($('<span data-cidx="'+idx+'" data-str="stir" class="btn strMacro">Stir</span>'));
+
+		macroButtonGroup = $('<div class="btn-group"></div>');
+		contextBottomControls.append(macroButtonGroup);
+		macroButtonGroup.append($('<span data-cidx="'+idx+'" data-str="strain" class="btn strMacro">Strain into '+intendedServingVessel+'</span>'));
+		macroButtonGroup.append('<button class="btn dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>');
+		macroButtonSubOptions = $('<ul class="dropdown-menu"></ul>');
+		macroButtonSubOptions.append($('<li><a tabindex="-1" data-cidx="'+idx+'" class="strMacro" data-str="pour" href="#">pour into '+intendedServingVessel+'</a></li>'));
+		macroButtonSubOptions.append($('<li><a tabindex="-1" data-cidx="'+idx+'" class="strMacro" data-str="fine strain" href="#">fine strain into '+intendedServingVessel+'</a></li>'));
+		macroButtonGroup.append(macroButtonSubOptions);
+
+
 	}
 
+	$('.rAddLineButton').last().addClass('btn-primary');
+	$('.rContextContainer').last().addClass('focused');
+
 	$('.rAddLineButton').click(function(){
-		var contextIdx = $(this).data('cidx');
-		var lineForm = editFormForLine(contextIdx,99999);
-		$('#rContextContainer'+contextIdx).append(lineForm);
-		$(this).hide();
-		$('#lineInput99999').focus();
+		if (! isModeEdit) {
+			var contextIdx = $(this).data('cidx');
+			var lineForm = editFormForLine(contextIdx,99999);
+			$('#rContextContainer'+contextIdx).append(lineForm);
+			$('#contextControlsBottom'+contextIdx).hide();
+			$('#lineInput99999').focus();
+			isModeEdit=true;
+		}
 	});
+
+	$('.strMacro').click(function() {
+		focusedContextIdx = $(this).data('cidx');
+		var context = recipeAssembly[$(this).data('cidx')];
+		var struct = {
+					c: recipeAssembly[$(this).data('cidx')].context,
+					l: $(this).data('str')
+				};
+		$.getJSON('/rec/parseString/'+JSON.stringify(struct),function(msg){
+			console.log(msg);
+			console.log('will add the above to context ',focusedContextIdx);
+			recipeAssembly[focusedContextIdx].components.push(msg);
+			renderContexts();
+		});
+	});
+
 
 	$('.rContextDelete').click(function() {
 		recipeAssembly.splice($(this).data('idx'),1);
@@ -93,19 +183,34 @@ function renderContexts() {
 		if ($(this).attr('disabled')==='disabled') {
 			return false;
 		}
+		isModeEdit = true;
 		var lineID = $(this).data('lineid');
-		window.log($(this).data('cidx'));
-		window.log(lineID);
 		$('#rLine'+lineID).hide();
 		$('#rLineForm'+lineID).show();
 		$('.rLineEdit').attr('disabled','disabled');
+		$('.rAddLineButton').attr('disabled','disabled');
+		$('.rContextDelete').attr('disabled','disabled');
+		$('.rLineDelete').attr('disabled','disabled');
+		$('.addContextButton').attr('disabled','disabled');
+		$('#rLineForm'+lineID).find('.lineInput').focus().keypress(function(e) {
+			console.log('key: ',e.keyCode);
+			if (e.keyCode === 13) {
+				var lineID = $(this).data('lineid');
+				$('#doneButton'+lineID).click();
+			}
+			if (e.which === 27) {
+				var lineID = $(this).data('lineid');
+				$('#cancelButton'+lineID).click();
+			}
+		});
 	});
 
-
-	var addContextServingVessel = $('<input class="btn" type="button" value="serving vessel">');
-	var addContextMixingGlass = $('<input class="btn" type="button" value="mixing glass">');
-	var addContextShaker = $('<input class="btn" type="button" value="shaker">');
-	var addContextBlender = $('<input class="btn" type="button" value="blender">');
+	var addContextRow = $('<div id="addContexts"><button class="btn btn-link" disabled="disabled">switch to:</button></div>');
+	$('#rAssembly').append(addContextRow);
+	var addContextServingVessel = $('<input class="btn btn-small addContextButton" type="button" value="'+intendedServingVessel+'">');
+	var addContextMixingGlass = $('<input class="btn btn-small addContextButton" type="button" value="mixing glass">');
+	var addContextShaker = $('<input class="btn btn-small addContextButton" type="button" value="shaker">');
+	var addContextBlender = $('<input class="btn btn-small addContextButton" type="button" value="blender">');
 
 	var lastContext;
 	if (recipeAssembly.length > 0) {
@@ -113,16 +218,16 @@ function renderContexts() {
 	}
 
 	if (lastContext !== 'serving vessel') {
-		$('#recipeContainer').append(addContextServingVessel);	
+		addContextRow.append(addContextServingVessel);	
 	}
 	if (lastContext !== 'mixing glass') {
-		$('#recipeContainer').append(addContextMixingGlass);
+		addContextRow.append(addContextMixingGlass);
 	}
 	if (lastContext !== 'shaker') {
-		$('#recipeContainer').append(addContextShaker);
+		addContextRow.append(addContextShaker);
 	}
 	if (lastContext !== 'blender') {
-		$('#recipeContainer').append(addContextBlender);	
+		addContextRow.append(addContextBlender);	
 	}
 
 	addContextServingVessel.click(function() {
@@ -166,14 +271,14 @@ function lineRepForLine(contextIdx,componentIdx) {
 
 	var line = $('<div class="span8"></div>');
 	if (component.valid) {
-		line.html($('<p>'+component.rendering+'</p>'));
+		line.html($('<p>'+component.rendering.replace('serving vessel(s)',intendedServingVessel)+'</p>'));
 	} else {
 		line.html($('<p>'+'{invalid component}'+'</p>'));
 	}
 	fieldset.append(line);
 	var controls = $('<div id="rLineControls'+lineIDCounter+'" class="span3"></div>');
-	var editButton = $('<span id="editButton'+lineIDCounter+'" data-lineid="'+lineIDCounter+'" data-cidx="'+contextIdx+'" data-idx="'+componentIdx+'" class="btn rLineEdit">Edit</span>');
-	var deleteButton = $('<span id="deleteButton'+lineIDCounter+'" data-cidx="'+contextIdx+'" data-idx="'+componentIdx+'" class="btn rLineDelete">X</span>');
+	var editButton = $('<span id="editButton'+lineIDCounter+'" data-lineid="'+lineIDCounter+'" data-cidx="'+contextIdx+'" data-idx="'+componentIdx+'" class="btn btn-link rLineEdit">Edit</span>');
+	var deleteButton = $('<span id="deleteButton'+lineIDCounter+'" data-cidx="'+contextIdx+'" data-idx="'+componentIdx+'" class="btn btn-link rLineDelete">X</span>');
 	controls.append(editButton);
 	controls.append(deleteButton);
 	fieldset.append(controls);
@@ -202,7 +307,6 @@ function editFormForLine(contextIdx,componentIdx) {
 
 	// text input/submit/cancel
 	var val = '';
-	window.log('> ', component.rawText);
 	if (component.rawText) {
 		val = component.rawText;
 	} else if (component.rendering) {
@@ -212,11 +316,11 @@ function editFormForLine(contextIdx,componentIdx) {
 	fieldset.append(middlestuff);
 	var inputContainer = $('<div class="input-append"></div>');
 	middlestuff.append(inputContainer);
-	var inputField = $('<input class="span6" id="lineInput'+localLineCounter+'" data-lineid="'+localLineCounter+'" data-cidx="'+contextIdx+'" data-idx="'+componentIdx+'" type="text" value="'+val+'">');
+	var inputField = $('<input class="span6 lineInput" id="lineInput'+localLineCounter+'" data-lineid="'+localLineCounter+'" data-cidx="'+contextIdx+'" data-idx="'+componentIdx+'" type="text" value="'+val+'">');
 	inputField.data('form',form);
-	var doneButton = $('<button class="btn" id="doneButton'+localLineCounter+'" data-lineid="'+localLineCounter+'" data-cidx="'+contextIdx+'" data-idx="'+componentIdx+'" type="button">Done</button>');
+	var doneButton = $('<button class="btn doneButton" id="doneButton'+localLineCounter+'" data-lineid="'+localLineCounter+'" data-cidx="'+contextIdx+'" data-idx="'+componentIdx+'" type="button">Done</button>');
 	doneButton.data('form',form);
-	var cancelButton = $('<button id="cancelButton'+localLineCounter+'" class="btn" type="button">Cancel</button>');
+	var cancelButton = $('<button id="cancelButton'+localLineCounter+'" class="btn cancelButton" type="button">Cancel</button>');
 	inputContainer.append(inputField);
 	inputContainer.append(doneButton);
 	inputContainer.append(cancelButton);
@@ -228,7 +332,6 @@ function editFormForLine(contextIdx,componentIdx) {
 
 	// prevent form submission
 	form.submit(function(e) {
-		window.log('submit!');
 		e.preventDefault();
 	});
 
@@ -253,6 +356,7 @@ function editFormForLine(contextIdx,componentIdx) {
 	cancelButton.click(function() {
 		renderContexts();
 	});
+
 
 
 	// control some input
@@ -355,8 +459,8 @@ function editFormForLine(contextIdx,componentIdx) {
 						searchResults.find('a').keydown(function(e) {
 							var items = $('[role=menu] li:not(.divider):visible a');
 							var index = items.index(items.filter(':focus'));
-							if (e.keyCode == 38 && index > 0) index-- ;                                       // up
-							if (e.keyCode == 40 && index < items.length - 1) index++   ;                     // down
+							if (e.keyCode === 38 && index > 0) index-- ;                                       // up
+							if (e.keyCode === 40 && index < items.length - 1) index++   ;                     // down
 							if (!~index) index = 0;
 							items[index].focus();
 						});
@@ -413,8 +517,103 @@ function editFormForLine(contextIdx,componentIdx) {
 	return form;
 }
 
+function bootstrapRecipe(recipeData) {
+
+	// front matter
+	var titleField = $('<input type="text" id="recipeTitle" placeholder="Recipe title" />');
+	$('#recipeContainer').append(titleField);
+	titleField.change(function() {
+		recipeTitle = $(this).val();
+	});
+	if (recipeTitle) {
+		titleField.val(recipeTitle);
+	}
+	var servingVesselField = $('<input type="text" id="servingVessel" placeholder="Serving vessel" />');
+	$('#recipeContainer').append(servingVesselField);
+	servingVesselField.change(function() {
+		intendedServingVessel = $(this).val();
+		renderContexts();
+	});
+	if (intendedServingVessel) {
+		servingVesselField.val(intendedServingVessel);
+	}
+	// container for the contexts
+	$('#recipeContainer').append($('<div id="rAssembly"></div>'));
+
+	// recipe submit button
+	var submitButton = $('<button class="btn btn-success btn-block" type="button">Submit recipe</button>');
+	$('#recipeContainer').append(submitButton);
+	submitButton.click(submitRecipe);
+
+	// render the contexts
+	renderContexts();
+}
+
+function packageRecipe() {
+	var recipeBody = {};
+	recipeBody.recipeID = recipeID;
+	recipeBody.title = recipeTitle; 
+	recipeBody.assembly = recipeAssembly;
+	recipeBody.servingVessel = intendedServingVessel;
+	return recipeBody;
+}
+
+function submitRecipe() {
+	$('#inputFeedback').text(JSON.stringify(packageRecipe()));
+	var jdata = JSON.stringify(packageRecipe());
+	jQuery.ajax({
+		type:'POST',
+        url: '/rec/submitrecipe', // the pyramid server
+        data: jdata,
+        contentType: 'application/json; charset=utf-8',
+        success: function(data,status,jqXHR) {
+        	console.log('got back: ',data,status);
+        }
+    });
+}
+
+function loadRecipe(jdata) {
+	recipeAssembly = jdata.assembly;
+	intendedServingVessel = jdata.servingVessel;
+	$('#servingVessel').val(intendedServingVessel);
+	recipeTitle = jdata.title;
+	$('#recipeTitle').val(recipeTitle);
+	renderContexts();
+}
+
 jQuery(document).ready(function() {
 
-	renderContexts();
+	if (getQueryVariable("id")) {
+		recipeID = (getQueryVariable("id"));
+		$.getJSON('/rec/fetch/'+recipeID,function(msg){
+			loadRecipe(msg);
+		});
+	}
+
+	// sample recipe
+	//var recipeData = $.parseJSON(SAMPLE_RECIPE);
+	//recipeAssembly = recipeData.assembly;
+	//intendedServingVessel = recipeData.servingVessel;
+	//recipeTitle = recipeData.title;
+
+	
+	/*recipeAssembly = [{"context":"mixing glass"}];
+	recipeAssembly[0].components = [
+		{"context":"mixing glass", "modifiers": [], "ingredients": [556], "rawText":"1 oz gin", "rendering": "add 1.0 oz gin", "valid": true, "measure": "1 oz", "type": "AddMeasureOfIngredient"},
+		{"context":"mixing glass", "modifiers": [], "ingredients": [556], "rawText":"1 oz campari", "rendering": "add 1.0 oz Campari", "valid": true, "measure": "1 oz", "type": "AddMeasureOfIngredient"},
+		{"context":"mixing glass", "modifiers": [], "ingredients": [556], "rawText":"1 oz red vermouth", "rendering": "add 1.0 oz red vermouth", "valid": true, "measure": "1 oz", "type": "AddMeasureOfIngredient"}
+		];
+	*/
+
+	// Build and bootstrap our recipe
+	bootstrapRecipe();
+
+	// Bind enter key for convenience addline
+	$(document).keypress(function(e) {
+		if (e.which === 13) {
+			$('.rAddLineButton.btn-primary').click();
+		}
+	});
+	
 
 });
