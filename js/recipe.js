@@ -60,7 +60,7 @@ function renderContexts() {
 			contextContainer.append($('<h4>'+intendedServingVessel+'</h4>'));
 		}
 
-		var deleteButton = $('<span id="delContext'+idx+'" data-cidx="'+idx+'" class="btn btn-link rContextDelete">X</span>');
+		var deleteButton = $('<span id="delContext'+idx+'" data-cidx="'+idx+'" class="btn btn-link rContextDelete"><i class="icon-remove-circle"></i></span>');
 		contextContainer.append(deleteButton);
 
 		for (var componentIdx=0; componentIdx < components.length; componentIdx++ ) {
@@ -106,35 +106,65 @@ function renderContexts() {
 		contextBottomControls.append('<button class="btn btn-link" disabled="disabled">or append:</button>');
 		var macroButtonGroup;
 		var macroButtonSubOptions;
-		macroButtonGroup = $('<div class="btn-group"></div>');
-		contextBottomControls.append(macroButtonGroup);
-		macroButtonGroup.append($('<span data-cidx="'+idx+'" data-str="add ice" class="btn strMacro">Add ice</span>'));
-		macroButtonGroup.append('<button class="btn dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>');
-		macroButtonSubOptions = $('<ul class="dropdown-menu"></ul>');
-		macroButtonSubOptions.append($('<li><a tabindex="-1" data-cidx="'+idx+'" class="strMacro" data-str="add cracked ice" href="#">add cracked ice</a></li>'));
-		macroButtonSubOptions.append($('<li><a tabindex="-1" data-cidx="'+idx+'" class="strMacro" data-str="add crushed ice" href="#">add crushed ice</a></li>'));
-		macroButtonSubOptions.append($('<li><a tabindex="-1" data-cidx="'+idx+'" class="strMacro" data-str="add big ice" href="#">add big ice</a></li>'));
-		macroButtonGroup.append(macroButtonSubOptions);
 
-		macroButtonGroup = $('<div class="btn-group"></div>');
-		contextBottomControls.append(macroButtonGroup);
-		macroButtonGroup.append($('<span data-cidx="'+idx+'" data-str="shake" class="btn strMacro">Shake</span>'));
-		macroButtonGroup.append('<button class="btn dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>');
-		macroButtonSubOptions = $('<ul class="dropdown-menu"></ul>');
-		macroButtonSubOptions.append($('<li><a tabindex="-1" data-cidx="'+idx+'" class="strMacro" data-str="dry shake" href="#">dry shake</a></li>'));
-		macroButtonSubOptions.append($('<li><a tabindex="-1" data-cidx="'+idx+'" class="strMacro" data-str="roll" href="#">roll</a></li>'));
-		macroButtonGroup.append(macroButtonSubOptions);
+		if (context.context!='serving vessel') {
+			macroButtonGroup = $('<div class="btn-group"></div>');
+			contextBottomControls.append(macroButtonGroup);
+			macroButtonGroup.append($('<span data-cidx="'+idx+'" data-str="add ice" class="btn strMacro">Add ice</span>'));
+			macroButtonGroup.append('<button class="btn dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>');
+			macroButtonSubOptions = $('<ul class="dropdown-menu"></ul>');
+			macroButtonSubOptions.append($('<li><a tabindex="-1" data-cidx="'+idx+'" class="strMacro" data-str="add cracked ice" href="#">add cracked ice</a></li>'));
+			macroButtonSubOptions.append($('<li><a tabindex="-1" data-cidx="'+idx+'" class="strMacro" data-str="add crushed ice" href="#">add crushed ice</a></li>'));
+			macroButtonSubOptions.append($('<li><a tabindex="-1" data-cidx="'+idx+'" class="strMacro" data-str="add big ice" href="#">add big ice</a></li>'));
+			macroButtonGroup.append(macroButtonSubOptions);
 
-		contextBottomControls.append($('<span data-cidx="'+idx+'" data-str="stir" class="btn strMacro">Stir</span>'));
+			macroButtonGroup = $('<div class="btn-group"></div>');
+			contextBottomControls.append(macroButtonGroup);
+			macroButtonGroup.append($('<span data-cidx="'+idx+'" data-str="shake" class="btn strMacro">Shake</span>'));
+			macroButtonGroup.append('<button class="btn dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>');
+			macroButtonSubOptions = $('<ul class="dropdown-menu"></ul>');
+			macroButtonSubOptions.append($('<li><a tabindex="-1" data-cidx="'+idx+'" class="strMacro" data-str="dry shake" href="#">dry shake</a></li>'));
+			macroButtonSubOptions.append($('<li><a tabindex="-1" data-cidx="'+idx+'" class="strMacro" data-str="roll" href="#">roll</a></li>'));
+			macroButtonGroup.append(macroButtonSubOptions);
 
-		macroButtonGroup = $('<div class="btn-group"></div>');
-		contextBottomControls.append(macroButtonGroup);
-		macroButtonGroup.append($('<span data-cidx="'+idx+'" data-str="strain" class="btn strMacro">Strain into '+intendedServingVessel+'</span>'));
-		macroButtonGroup.append('<button class="btn dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>');
-		macroButtonSubOptions = $('<ul class="dropdown-menu"></ul>');
-		macroButtonSubOptions.append($('<li><a tabindex="-1" data-cidx="'+idx+'" class="strMacro" data-str="pour" href="#">pour into '+intendedServingVessel+'</a></li>'));
-		macroButtonSubOptions.append($('<li><a tabindex="-1" data-cidx="'+idx+'" class="strMacro" data-str="fine strain" href="#">fine strain into '+intendedServingVessel+'</a></li>'));
-		macroButtonGroup.append(macroButtonSubOptions);
+			contextBottomControls.append($('<span data-cidx="'+idx+'" data-str="stir" class="btn strMacro">Stir</span>'));
+
+			macroButtonGroup = $('<div class="btn-group"></div>');
+			contextBottomControls.append(macroButtonGroup);
+			macroButtonGroup.append($('<span data-cidx="'+idx+'" data-str="strain" class="btn strMacro">Strain into '+intendedServingVessel+'</span>'));
+			macroButtonGroup.append('<button class="btn dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>');
+			macroButtonSubOptions = $('<ul class="dropdown-menu"></ul>');
+			macroButtonSubOptions.append($('<li><a tabindex="-1" data-cidx="'+idx+'" class="strMacro" data-str="pour" href="#">pour into '+intendedServingVessel+'</a></li>'));
+			macroButtonSubOptions.append($('<li><a tabindex="-1" data-cidx="'+idx+'" class="strMacro" data-str="fine strain" href="#">fine strain into '+intendedServingVessel+'</a></li>'));
+			macroButtonGroup.append(macroButtonSubOptions);
+
+		}
+
+		if (context.context==='serving vessel') {
+			macroButtonGroup = $('<div class="btn-group"></div>');
+			contextBottomControls.append(macroButtonGroup);
+			macroButtonGroup.append($('<span data-cidx="'+idx+'" data-str="fill with ice" class="btn strMacro">fill with ice</span>'));
+			macroButtonGroup.append('<button class="btn dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>');
+			macroButtonSubOptions = $('<ul class="dropdown-menu"></ul>');
+			macroButtonSubOptions.append($('<li><a tabindex="-1" data-cidx="'+idx+'" class="strMacro" data-str="fill with crushed ice" href="#">fill with crushed ice</a></li>'));
+			macroButtonSubOptions.append($('<li><a tabindex="-1" data-cidx="'+idx+'" class="strMacro" data-str="fill with big ice" href="#">add big ice</a></li>'));
+			macroButtonSubOptions.append($('<li><a tabindex="-1" data-cidx="'+idx+'" class="strMacro" data-str="top with crushed ice" href="#">top with crushed ice</a></li>'));
+			macroButtonGroup.append(macroButtonSubOptions);
+
+			contextBottomControls.append($('<span data-cidx="'+idx+'" data-str="stir" class="btn strMacro">Stir</span>'));
+
+			macroButtonGroup = $('<div class="btn-group"><button class="btn btn-link" disabled="disabled">garnishing:</button></div>');
+			contextBottomControls.append(macroButtonGroup);
+			macroButtonGroup.append($('<span data-cidx="'+idx+'" data-str="garnish with a lemon twist" class="btn strMacro">lemon twist</span>'));
+			macroButtonGroup.append('<button class="btn dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>');
+			macroButtonSubOptions = $('<ul class="dropdown-menu"></ul>');
+			macroButtonSubOptions.append($('<li><a tabindex="-1" data-cidx="'+idx+'" class="strMacro" data-str="garnish with a cherry" href="#">cherry</a></li>'));
+			macroButtonSubOptions.append($('<li><a tabindex="-1" data-cidx="'+idx+'" class="strMacro" data-str="garnish with an orange wheel" href="#">orange wheel</a></li>'));
+			macroButtonSubOptions.append($('<li><a tabindex="-1" data-cidx="'+idx+'" class="strMacro" data-str="garnish with a lime wheel" href="#">lime wheel</a></li>'));
+			macroButtonGroup.append(macroButtonSubOptions);			
+		}
+		
+
 
 
 	}
@@ -276,9 +306,9 @@ function lineRepForLine(contextIdx,componentIdx) {
 		line.html($('<p>'+'{invalid component}'+'</p>'));
 	}
 	fieldset.append(line);
-	var controls = $('<div id="rLineControls'+lineIDCounter+'" class="span3"></div>');
-	var editButton = $('<span id="editButton'+lineIDCounter+'" data-lineid="'+lineIDCounter+'" data-cidx="'+contextIdx+'" data-idx="'+componentIdx+'" class="btn btn-link rLineEdit">Edit</span>');
-	var deleteButton = $('<span id="deleteButton'+lineIDCounter+'" data-cidx="'+contextIdx+'" data-idx="'+componentIdx+'" class="btn btn-link rLineDelete">X</span>');
+	var controls = $('<div id="rLineControls'+lineIDCounter+'" class="span3 rLineControls"></div>');
+	var editButton = $('<span id="editButton'+lineIDCounter+'" data-lineid="'+lineIDCounter+'" data-cidx="'+contextIdx+'" data-idx="'+componentIdx+'" class="btn btn-link rLineEdit"><i class="icon-edit"></i></span>');
+	var deleteButton = $('<span id="deleteButton'+lineIDCounter+'" data-cidx="'+contextIdx+'" data-idx="'+componentIdx+'" class="btn btn-link rLineDelete"><i class="icon-remove"></i></span>');
 	controls.append(editButton);
 	controls.append(deleteButton);
 	fieldset.append(controls);
