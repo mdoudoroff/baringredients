@@ -259,11 +259,24 @@ function renderContexts() {
 					c: recipeAssembly[$(this).data('cidx')].context,
 					l: $(this).data('str')
 				};
-		$.getJSON('/rec/parseString/'+JSON.stringify(struct),function(msg){
-			console.log(msg);
-			console.log('will add the above to context ',focusedContextIdx);
-			recipeAssembly[focusedContextIdx].components.push(msg);
-			renderContexts();
+		// $.getJSON('/rec/parseString/'+JSON.stringify(struct),function(msg){
+		// 	console.log(msg);
+		// 	console.log('will add the above to context ',focusedContextIdx);
+		// 	recipeAssembly[focusedContextIdx].components.push(msg);
+		// 	renderContexts();
+		// });
+		jdata = JSON.stringify(struct);
+		jQuery.ajax({
+			type:'POST',
+			url: '/rec/parseString', // the pyramid server
+			data: jdata,
+			contentType: 'application/json; charset=utf-8',
+			success: function(data,status,jqXHR) {
+				console.log(data);
+				console.log('will add the above to context ',focusedContextIdx);
+				recipeAssembly[focusedContextIdx].components.push(data);
+				renderContexts();
+			}
 		});
 	});
 
@@ -491,7 +504,23 @@ function editFormForLine(contextIdx,componentIdx) {
 		var thisGoddamnThing = $(this);
 
 		window.log(e.keyCode);
+
+		// handle escape key
+		if (e.keyCode===27) {
+			searchResults.hide();
+
+			e.preventDefault();
+			e.stopPropagation();
+			return false;
+		}
 		
+		// handle enter key
+		if (e.keyCode===13) {
+			//console.log('ENTER KEY!!!');
+			// @@ need a clear way of interpreting this character
+			//    - is there a valid component
+			//    - are we not overreacting (e.g., keyboard selection of an ingredient match)
+		}
 
 		if (lineString.length > 1) {
 
@@ -552,6 +581,9 @@ function editFormForLine(contextIdx,componentIdx) {
 							searchResults.hide();
 							inputField.val(lineString.replace(currentWord,$(this).data('val'))+' ');
 							inputField.caret(inputField.val().length);
+							var e = jQuery.Event("keyup");
+							e.which = 32; // # Some key code value
+							inputField.trigger(e);
 						});
 						
 						// add keyup/down support
@@ -584,28 +616,37 @@ function editFormForLine(contextIdx,componentIdx) {
 					l: lineString
 				};
 
-				//$.getJSON('/rec/parseString/'+fixEncoding(lineString),function(msg){
-				$.getJSON('/rec/parseString/'+JSON.stringify(struct),function(msg){
+				var jdata = JSON.stringify(struct);
+				jQuery.ajax({
+					type:'POST',
+					url: '/rec/parseString', // the pyramid server
+					data: jdata,
+					contentType: 'application/json; charset=utf-8',
+					success: function(data,status,jqXHR) {
 
-					var lineID = thisGoddamnThing.data('lineid');
+						var lineID = thisGoddamnThing.data('lineid');
 
-					var form = $('#rLineForm'+lineID);
+						var form = $('#rLineForm'+lineID);
 
-					form.data('pendingComponent',msg);
+						form.data('pendingComponent',data);
 
-					bits = [];
+						bits = [];
 
-					bits.push(msg.rendering);
+						bits.push(data.rendering);
 
-					if (msg.valid) {
-						bits.push('VALID');
-					} else {
-						bits.push('INVALID');
+						if (data.valid) {
+							bits.push('VALID');
+							$('#doneButton'+lineID).addClass('btn-primary');
+						} else {
+							bits.push('INVALID');
+							$('#doneButton'+lineID).removeClass('btn-primary');
+						}
+
+						$('#feedback'+lineID).text(bits.join());
+
 					}
+				})
 
-					$('#feedback'+lineID).text(bits.join());
-
-				});
 			}
 
 		} else {
@@ -667,6 +708,7 @@ function submitRecipe() {
         contentType: 'application/json; charset=utf-8',
         success: function(data,status,jqXHR) {
         	console.log('got back: ',data,status);
+        	window.location = data;
         }
     });
 }
