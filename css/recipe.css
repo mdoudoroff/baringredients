@@ -97,3 +97,18 @@ footer {
   font-size: small;
   color: #888;
 }
+.flavor-size-0 {
+  font-size: 95%;
+}
+.flavor-size-1 {
+  font-size: 125%;
+}
+.flavor-size-2 {
+  font-size: 150%;
+}
+.flavor-size-3 {
+  font-size: 170%;
+}
+.flavor-size-4 {
+  font-size: 225%;
+}
