@@ -90,3 +90,10 @@ footer {
   padding: 9px 0 18px 0;
   margin: 9px 0 36px 0;
 }
+.component {
+  padding-left: 18px;
+}
+.timestamp {
+  font-size: small;
+  color: #888;
+}
