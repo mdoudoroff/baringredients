@@ -75,7 +75,7 @@ window.log = function(){
   log.history = log.history || [];   // store logs to an array for reference
   log.history.push(arguments);
   if(this.console){
-    console.log( Array.prototype.slice.call(arguments) );
+	console.log( Array.prototype.slice.call(arguments) );
   }
 };
 
@@ -86,13 +86,13 @@ function fixEncoding(s) {
 
 function getQueryVariable(variable)
 {
-       var query = window.location.search.substring(1);
-       var vars = query.split("&");
-       for (var i=0;i<vars.length;i++) {
-               var pair = vars[i].split("=");
-               if(pair[0] == variable){return pair[1];}
-       }
-       return(false);
+	   var query = window.location.search.substring(1);
+	   var vars = query.split("&");
+	   for (var i=0;i<vars.length;i++) {
+			   var pair = vars[i].split("=");
+			   if(pair[0] === variable){return pair[1];}
+	   }
+	   return(false);
 }
 
 var keycodesToIgnore = [37,38,39,40];
@@ -103,8 +103,10 @@ var SAMPLE_RECIPE = '{"title":"Negroni","assembly":[{"context":"mixing glass","c
 
 var recipeID = '';
 var recipeTitle = '(untitled)';
+var recipeServings = 1;
 var recipeAssembly = [];
 var intendedServingVessel = 'cocktail glass';
+var intendedServingVesselID = 5;
 var lineIDCounter = 0;
 var focusedContextIdx;  // this is an uncouth global... not sure what to do about it yet
 var contextIdx;
@@ -254,18 +256,17 @@ function renderContexts() {
 
 	$('.strMacro').click(function() {
 		focusedContextIdx = $(this).data('cidx');
-		var context = recipeAssembly[$(this).data('cidx')];
+		var contextDict = {
+			context: recipeAssembly[$(this).data('cidx')].context,
+			servings: recipeServings,
+			servingVessels: [intendedServingVesselID]
+		};
 		var struct = {
-					c: recipeAssembly[$(this).data('cidx')].context,
+					d: contextDict,
 					l: $(this).data('str')
 				};
-		// $.getJSON('/rec/parseString/'+JSON.stringify(struct),function(msg){
-		// 	console.log(msg);
-		// 	console.log('will add the above to context ',focusedContextIdx);
-		// 	recipeAssembly[focusedContextIdx].components.push(msg);
-		// 	renderContexts();
-		// });
-		jdata = JSON.stringify(struct);
+
+		var jdata = JSON.stringify(struct);
 		jQuery.ajax({
 			type:'POST',
 			url: '/rec/parseString', // the pyramid server
@@ -518,8 +519,8 @@ function editFormForLine(contextIdx,componentIdx) {
 		if (e.keyCode===13) {
 			//console.log('ENTER KEY!!!');
 			// @@ need a clear way of interpreting this character
-			//    - is there a valid component
-			//    - are we not overreacting (e.g., keyboard selection of an ingredient match)
+			//	- is there a valid component
+			//	- are we not overreacting (e.g., keyboard selection of an ingredient match)
 		}
 
 		if (lineString.length > 1) {
@@ -590,8 +591,8 @@ function editFormForLine(contextIdx,componentIdx) {
 						searchResults.find('a').keydown(function(e) {
 							var items = $('[role=menu] li:not(.divider):visible a');
 							var index = items.index(items.filter(':focus'));
-							if (e.keyCode === 38 && index > 0) index-- ;                                       // up
-							if (e.keyCode === 40 && index < items.length - 1) index++   ;                     // down
+							if (e.keyCode === 38 && index > 0) index-- ;									   // up
+							if (e.keyCode === 40 && index < items.length - 1) index++   ;					 // down
 							if (!~index) index = 0;
 							items[index].focus();
 						});
@@ -611,8 +612,14 @@ function editFormForLine(contextIdx,componentIdx) {
 			// server parsing
 			if (keycodesToIgnore.indexOf(e.keyCode)===-1) {
 
+				var contextDict = {
+					context: recipeAssembly[$(this).data('cidx')].context,
+					servings: recipeServings,
+					servingVessels: [intendedServingVesselID]
+				};
+
 				var struct = {
-					c: recipeAssembly[$(this).data('cidx')].context,
+					d: contextDict,
 					l: lineString
 				};
 
@@ -645,7 +652,7 @@ function editFormForLine(contextIdx,componentIdx) {
 						$('#feedback'+lineID).text(bits.join());
 
 					}
-				})
+				});
 
 			}
 
@@ -660,7 +667,9 @@ function editFormForLine(contextIdx,componentIdx) {
 function bootstrapRecipe(recipeData) {
 
 	// front matter
-	var titleField = $('<input type="text" id="recipeTitle" placeholder="Recipe title" />');
+
+	// - title field
+	var titleField = $('<label>Recipe title</label><input type="text" id="recipeTitle" placeholder="Recipe title" />');
 	$('#recipeContainer').append(titleField);
 	titleField.change(function() {
 		recipeTitle = $(this).val();
@@ -668,15 +677,43 @@ function bootstrapRecipe(recipeData) {
 	if (recipeTitle) {
 		titleField.val(recipeTitle);
 	}
-	var servingVesselField = $('<input type="text" id="servingVessel" placeholder="Serving vessel" />');
+
+	// - servings
+	var servingsField = $('<label>No. Servings</label><input type="number" id="recipeServings" placeholder="1" />');
+	$('#recipeContainer').append(servingsField);
+	servingsField.change(function() {
+		var val = $(this).val();
+		if (val > 0) {
+			recipeServings = val;
+		} else {
+			$(this).val(1);
+		}
+	});
+	if (recipeServings) {
+		servingsField.val(recipeServings);
+	}
+
+	// - serving vessel
+	var servingVesselField = $('<label>Serving Vessel</label><select type="text" id="servingVessel"></select>');
 	$('#recipeContainer').append(servingVesselField);
+	jQuery.ajax({
+		type:'GET',
+		url: '/rec/barware', // the pyramid server
+		contentType: 'application/json; charset=utf-8',
+		async: false,
+		success: function(msg,status,jqXHR) {
+			for (var x=0; x<msg.length;x++) {
+				$('#servingVessel').append($('<option value="'+msg[x][0]+'">'+msg[x][1]+'</option>'));
+			}
+		}
+	});
 	servingVesselField.change(function() {
-		intendedServingVessel = $(this).val();
+		intendedServingVessel = $(this).find(":selected").text();
+		intendedServingVesselID = $(this).val();
+
 		renderContexts();
 	});
-	if (intendedServingVessel) {
-		servingVesselField.val(intendedServingVessel);
-	}
+
 	// container for the contexts
 	$('#recipeContainer').append($('<div id="rAssembly"></div>'));
 
@@ -692,9 +729,11 @@ function bootstrapRecipe(recipeData) {
 function packageRecipe() {
 	var recipeBody = {};
 	recipeBody.recipeID = recipeID;
-	recipeBody.title = recipeTitle; 
+	recipeBody.title = recipeTitle;
+	recipeBody.servings = recipeServings; 
 	recipeBody.assembly = recipeAssembly;
 	recipeBody.servingVessel = intendedServingVessel;
+	recipeBody.servingVessels = [intendedServingVesselID];
 	return recipeBody;
 }
 
@@ -703,26 +742,44 @@ function submitRecipe() {
 	var jdata = JSON.stringify(packageRecipe());
 	jQuery.ajax({
 		type:'POST',
-        url: '/rec/submitrecipe', // the pyramid server
-        data: jdata,
-        contentType: 'application/json; charset=utf-8',
-        success: function(data,status,jqXHR) {
-        	console.log('got back: ',data,status);
-        	window.location = data;
-        }
-    });
+		url: '/rec/submitrecipe', // the pyramid server
+		data: jdata,
+		contentType: 'application/json; charset=utf-8',
+		success: function(data,status,jqXHR) {
+			console.log('got back: ',data,status);
+			window.location = data;
+		}
+	});
 }
 
 function loadRecipe(jdata) {
-	recipeAssembly = jdata.assembly;
-	intendedServingVessel = jdata.servingVessel;
-	$('#servingVessel').val(intendedServingVessel);
+	
 	recipeTitle = jdata.title;
+	intendedServingVessel = jdata.servingVessel;
+	if (jdata.servingVessels !== undefined && jdata.servingVessels.length>0) {
+		console.log('setting intendedServingVesselID to ',jdata.servingVessels[0]);
+		intendedServingVesselID = jdata.servingVessels[0];	
+	} else {
+		intendedServingVesselID = 5;
+	}
+	
+	recipeServings = jdata.servings;
+	recipeAssembly = jdata.assembly;
+
 	$('#recipeTitle').val(recipeTitle);
+	console.log('setting servingsField to ', recipeServings);
+	$('#recipeServings').val(recipeServings);
+	//$('#servingVessel').val(intendedServingVessel);
+	console.log('setting #servingVessel to ',intendedServingVesselID);
+	$('#servingVessel').val(intendedServingVesselID);
+	//$("#servingVessel").find("option[value='"+intendedServingVesselID+"']").attr('selected', 'selected');
 	renderContexts();
 }
 
 jQuery(document).ready(function() {
+
+	// Build and bootstrap our recipe
+	bootstrapRecipe();
 
 	if (getQueryVariable("id")) {
 		recipeID = (getQueryVariable("id"));
@@ -731,24 +788,6 @@ jQuery(document).ready(function() {
 		});
 	}
 
-	// sample recipe
-	//var recipeData = $.parseJSON(SAMPLE_RECIPE);
-	//recipeAssembly = recipeData.assembly;
-	//intendedServingVessel = recipeData.servingVessel;
-	//recipeTitle = recipeData.title;
-
-	
-	/*recipeAssembly = [{"context":"mixing glass"}];
-	recipeAssembly[0].components = [
-		{"context":"mixing glass", "modifiers": [], "ingredients": [556], "rawText":"1 oz gin", "rendering": "add 1.0 oz gin", "valid": true, "measure": "1 oz", "type": "AddMeasureOfIngredient"},
-		{"context":"mixing glass", "modifiers": [], "ingredients": [556], "rawText":"1 oz campari", "rendering": "add 1.0 oz Campari", "valid": true, "measure": "1 oz", "type": "AddMeasureOfIngredient"},
-		{"context":"mixing glass", "modifiers": [], "ingredients": [556], "rawText":"1 oz red vermouth", "rendering": "add 1.0 oz red vermouth", "valid": true, "measure": "1 oz", "type": "AddMeasureOfIngredient"}
-		];
-	*/
-
-	// Build and bootstrap our recipe
-	bootstrapRecipe();
-
 	// Bind enter key for convenience addline
 	$(document).keypress(function(e) {
 		if (e.which === 13) {
@@ -756,5 +795,26 @@ jQuery(document).ready(function() {
 		}
 	});
 	
+	// recipe display page stuff
+	$('#displayUnitsSelect').change(function() {
+		var units = $(this).val();
+		console.log('chose ',units);
+		$('.variableUnits').each(function() {
+			$(this).text($(this).data(units));
+		});
+	});
+
+	// brain dead language stuff
+	$('.lang-es').hide();
+	$('#languageSelect').change(function() {
+		$('.lang-en').hide();
+		$('.lang-es').hide();
+		
+		$("#languageSelect option:selected").each(function() {
+			console.log('showing .lang-'+$(this).val());
+			$('.lang-'+$(this).val()).show();
+		});
+		
+	});
 
 });
