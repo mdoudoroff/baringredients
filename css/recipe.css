@@ -81,6 +81,16 @@ footer {
   right: 9px;
   top: 9px;
 }
+.rContextUp {
+  position: absolute;
+  right: 83px;
+  top: 9px;
+}
+.rContextDown {
+  position: absolute;
+  right: 45px;
+  top: 9px;
+}
 #inputFeedback {
   margin-top: 36px;
   font-family: Menlo, mono;
@@ -89,6 +99,9 @@ footer {
 #rAssembly {
   padding: 9px 0 18px 0;
   margin: 9px 0 36px 0;
+}
+.inputFeedback {
+  color: gray;
 }
 .component {
   padding-left: 18px;

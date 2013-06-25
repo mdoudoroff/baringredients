@@ -26,6 +26,12 @@ function getQueryVariable(variable)
 	   return(false);
 }
 
+function arraymove(arr, fromIndex, toIndex) {
+    element = arr[fromIndex];
+    arr.splice(fromIndex, 1);
+    arr.splice(toIndex, 0, element);
+}
+
 var keycodesToIgnore = [37,38,39,40];
 
 var SAMPLE_RECIPE = '{"title":"Negroni","assembly":[{"context":"mixing glass","components":[{"context":"mixing glass","modifiers":[],"ingredients":[556],"rawText":"1 oz gin","rendering":"add 1.0 oz gin","valid":true,"measure":"1 oz","type":"AddMeasureOfIngredient"},{"context":"mixing glass","modifiers":[],"ingredients":[556],"rawText":"1 oz campari","rendering":"add 1.0 oz Campari","valid":true,"measure":"1 oz","type":"AddMeasureOfIngredient"},{"context":"mixing glass","modifiers":[],"ingredients":[556],"rawText":"1 oz red vermouth","rendering":"add 1.0 oz red vermouth","valid":true,"measure":"1 oz","type":"AddMeasureOfIngredient"},{"rawText":"add ice","modifiers":[],"ingredients":[1076],"rendering":"add ice","valid":true,"measure":"[UNDEFINED]","type":"AddUnmeasuredIngredient"},{"rawText":"stir","rendering":"stir","valid":true,"type":"stir"},{"rawText":"strain","rendering":"strain into serving vessel(s)","valid":true,"type":"strain"}]},{"context":"serving vessel","components":[{"rawText":"garnish with an orange wheel","modifiers":[],"ingredients":[1070],"rendering":"garnish with orange wheel","valid":true,"measure":"1","type":"GarnishWith"}]}],"servingVessel":"cocktail glass"}';
@@ -33,7 +39,7 @@ var SAMPLE_RECIPE = '{"title":"Negroni","assembly":[{"context":"mixing glass","c
 // == RECIPE
 
 var recipeID = '';
-var recipeTitle = '(untitled)';
+var recipeTitle = '';
 var recipeServings = 1;
 var recipeAssembly = [];
 var intendedServingVessel = 'cocktail glass';
@@ -42,6 +48,7 @@ var lineIDCounter = 0;
 var focusedContextIdx;  // this is an uncouth global... not sure what to do about it yet
 var contextIdx;
 var isModeEdit = false;
+var inputFieldHasKeyboardFocus = false;
 
 function renderContexts() {
 
@@ -62,8 +69,14 @@ function renderContexts() {
 			contextContainer.append($('<h4>'+intendedServingVessel+'</h4>'));
 		}
 
-		var deleteButton = $('<span id="delContext'+idx+'" data-cidx="'+idx+'" class="btn btn-link rContextDelete"><i class="icon-remove-circle"></i></span>');
-		contextContainer.append(deleteButton);
+		contextContainer.append($('<span data-cidx="'+idx+'" class="btn btn-link rContextDelete"><i class="icon-remove-circle"></i></span>'));
+		if (idx>0) {
+			contextContainer.append($('<span data-cidx="'+idx+'" class="btn btn-link rContextUp"><i class="icon-arrow-up"></i></span>'));	
+		}
+		if (idx<recipeAssembly.length-1) {
+			contextContainer.append($('<span data-cidx="'+idx+'" class="btn btn-link rContextDown"><i class="icon-arrow-down"></i></span>'));	
+		}
+		
 
 		for (var componentIdx=0; componentIdx < components.length; componentIdx++ ) {
 
@@ -214,31 +227,56 @@ function renderContexts() {
 
 
 	$('.rContextDelete').click(function() {
-		recipeAssembly.splice($(this).data('idx'),1);
-		renderContexts();
+		if ($(this).data('cidx')!==undefined) {
+			recipeAssembly.splice($(this).data('cidx'),1);
+			renderContexts();			
+		}
+	});
+	$('.rContextDown').click(function() {
+		if ($(this).data('cidx')!==undefined) {
+			arraymove(recipeAssembly,$(this).data('cidx'),$(this).data('cidx')+1);
+			renderContexts();			
+		}
+	});
+	$('.rContextUp').click(function() {
+		if ($(this).data('cidx')!==undefined) {
+			arraymove(recipeAssembly,$(this).data('cidx'),$(this).data('cidx')-1);
+			renderContexts();			
+		}
 	});
 
 	$('.rLineDelete').click(function(){
 		recipeAssembly[$(this).data('cidx')].components.splice($(this).data('idx'),1);
 		renderContexts();
 	});
+	$('.rLineUp').click(function(){
+		arraymove(recipeAssembly[$(this).data('cidx')].components,$(this).data('idx'),$(this).data('idx')-1);
+		renderContexts();
+	});
+	$('.rLineDown').click(function(){
+		arraymove(recipeAssembly[$(this).data('cidx')].components,$(this).data('idx'),$(this).data('idx')+1);
+		renderContexts();
+	});
 
 	$('.rLineEdit').click(function(){
-		if ($(this).attr('disabled')==='disabled') {
-			return false;
-		}
+		//if ($(this).attr('disabled')==='disabled') {
+		//	return false;
+		//}
 		isModeEdit = true;
 		var lineID = $(this).data('lineid');
 		$('#rLine'+lineID).hide();
 		$('#rLineForm'+lineID).show();
-		$('.rLineEdit').attr('disabled','disabled');
+		//$('.rLineEdit').attr('disabled','disabled');
 		$('.rAddLineButton').attr('disabled','disabled');
 		$('.rContextDelete').attr('disabled','disabled');
 		$('.rLineDelete').attr('disabled','disabled');
 		$('.addContextButton').attr('disabled','disabled');
-		$('#rLineForm'+lineID).find('.lineInput').focus().keypress(function(e) {
-			console.log('key: ',e.keyCode);
+
+
+
+		/*$('#rLineForm'+lineID).find('.lineInput').focus().keypress(function(e) {
 			if (e.keyCode === 13) {
+				console.log('handling enter for #rLineForm');
 				var lineID = $(this).data('lineid');
 				$('#doneButton'+lineID).click();
 			}
@@ -246,7 +284,7 @@ function renderContexts() {
 				var lineID = $(this).data('lineid');
 				$('#cancelButton'+lineID).click();
 			}
-		});
+		});*/
 	});
 
 	var addContextRow = $('<div id="addContexts"><button class="btn btn-link" disabled="disabled">switch to:</button></div>');
@@ -315,16 +353,21 @@ function lineRepForLine(contextIdx,componentIdx) {
 
 	var line = $('<div class="span8"></div>');
 	if (component.valid) {
-		line.html($('<p>'+component.rendering.replace('serving vessel(s)',intendedServingVessel)+'</p>'));
+		line.html($('<p class="rLineEdit" data-lineid="'+lineIDCounter+'" data-cidx="'+contextIdx+'" data-idx="'+componentIdx+'">'+component.rendering.replace('serving vessel(s)',intendedServingVessel)+'</p>'));
 	} else {
-		line.html($('<p>'+'{invalid component}'+'</p>'));
+		line.html($('<p class="rLineEdit" data-lineid="'+lineIDCounter+'" data-cidx="'+contextIdx+'" data-idx="'+componentIdx+'">'+'{invalid component}'+'</p>'));
 	}
 	fieldset.append(line);
 	var controls = $('<div id="rLineControls'+lineIDCounter+'" class="span3 rLineControls"></div>');
-	var editButton = $('<span id="editButton'+lineIDCounter+'" data-lineid="'+lineIDCounter+'" data-cidx="'+contextIdx+'" data-idx="'+componentIdx+'" class="btn btn-link rLineEdit"><i class="icon-edit"></i></span>');
-	var deleteButton = $('<span id="deleteButton'+lineIDCounter+'" data-cidx="'+contextIdx+'" data-idx="'+componentIdx+'" class="btn btn-link rLineDelete"><i class="icon-remove"></i></span>');
-	controls.append(editButton);
-	controls.append(deleteButton);
+	if (componentIdx>0) {
+		controls.append($('<span data-cidx="'+contextIdx+'" data-idx="'+componentIdx+'" class="btn btn-link rLineUp"><i class="icon-arrow-up"></i></span>'));	
+	}
+	if (componentIdx<context.components.length-1) {
+		controls.append($('<span data-cidx="'+contextIdx+'" data-idx="'+componentIdx+'" class="btn btn-link rLineDown"><i class="icon-arrow-down"></i></span>'));	
+	}
+	//var editButton = $('<span id="editButton'+lineIDCounter+'" data-lineid="'+lineIDCounter+'" data-cidx="'+contextIdx+'" data-idx="'+componentIdx+'" class="btn btn-link rLineEdit"><i class="icon-edit"></i></span>');
+	//controls.append(editButton);
+	controls.append($('<span data-cidx="'+contextIdx+'" data-idx="'+componentIdx+'" class="btn btn-link rLineDelete"><i class="icon-remove"></i></span>'));
 	fieldset.append(controls);
 
 	return fieldset;
@@ -336,10 +379,12 @@ function editFormForLine(contextIdx,componentIdx) {
 	var context = recipeAssembly[contextIdx];
 	var component = {};
 	var localLineCounter = lineIDCounter;
+	var lineValid = true;
 	if (componentIdx<99999) {
 		component = context.components[componentIdx];
 	} else {
 		localLineCounter = 99999;
+		lineValid = false;
 	}
 	
 	// container
@@ -360,9 +405,18 @@ function editFormForLine(contextIdx,componentIdx) {
 	fieldset.append(middlestuff);
 	var inputContainer = $('<div class="input-append"></div>');
 	middlestuff.append(inputContainer);
+	var lineStatus = $('<span id="lineValid'+localLineCounter+'" class="btn btn-link"><i class="icon-ban-circle"></i></span>');
+	if (lineValid) {
+		lineStatus = $('<span id="lineValid'+localLineCounter+'" class="btn btn-link"><i class="icon-ok-circle"></i></span>');
+	}
+	
+	inputContainer.append(lineStatus);
 	var inputField = $('<input class="span6 lineInput" id="lineInput'+localLineCounter+'" data-lineid="'+localLineCounter+'" data-cidx="'+contextIdx+'" data-idx="'+componentIdx+'" type="text" value="'+val+'">');
 	inputField.data('form',form);
 	var doneButton = $('<button class="btn doneButton" id="doneButton'+localLineCounter+'" data-lineid="'+localLineCounter+'" data-cidx="'+contextIdx+'" data-idx="'+componentIdx+'" type="button">Done</button>');
+	if (lineValid) {
+		doneButton.addClass('btn-primary');
+	}	
 	doneButton.data('form',form);
 	var cancelButton = $('<button id="cancelButton'+localLineCounter+'" class="btn cancelButton" type="button">Cancel</button>');
 	inputContainer.append(inputField);
@@ -372,7 +426,7 @@ function editFormForLine(contextIdx,componentIdx) {
 	var keywordMatchesList = $('<ul id="rKeywordMatches'+localLineCounter+'" class="dropdown-menu" role="menu" aria-labelledby="dLabel"></ul>');
 	dropdownContainer.append(keywordMatchesList);
 	inputContainer.append(dropdownContainer);
-	middlestuff.append($('<div id="feedback'+localLineCounter+'"></div>'));
+	middlestuff.append($('<div id="feedback'+localLineCounter+'" class="inputFeedback"></div>'));
 
 	// prevent form submission
 	form.submit(function(e) {
@@ -404,6 +458,7 @@ function editFormForLine(contextIdx,componentIdx) {
 
 
 	// control some input
+	/*
 	inputField.keydown(function(e) {
 		// trigger keyboard navigation of the matches, if any
 		if (e.keyCode===38 || e.keyCode===40) {
@@ -411,20 +466,30 @@ function editFormForLine(contextIdx,componentIdx) {
 			if (searchResults.find('li').length > 0) {
 				$(this).blur();
 				$('#kwMatch0').focus();
+				e.preventDefault();
+				e.stopPropagation();
 			} else {
 				e.preventDefault();
 				e.stopPropagation();
 			}
 		}
 	});
+	*/
 
 	// text input handling
 	inputField.keyup(function(e) {
 
 		if (e.keyCode===38 || e.keyCode===40) {
+			var searchResults = $('#rKeywordMatches'+$(this).data('lineid'));
+			if (searchResults.find('li').length > 0) {
+				$(this).blur();
+				$('#kwMatch0').focus();
+			}
 			e.preventDefault();
 			e.stopPropagation();
 			return false;
+		} else if (e.keyCode==27) {
+			$('#cancelButton'+$(this).data('lineid')).click();
 		}
 
 		var lineString = $(this).val();
@@ -439,7 +504,9 @@ function editFormForLine(contextIdx,componentIdx) {
 
 		// handle escape key
 		if (e.keyCode===27) {
+			searchRestuls.empty();
 			searchResults.hide();
+			inputFieldHasKeyboardFocus = true;
 
 			e.preventDefault();
 			e.stopPropagation();
@@ -447,13 +514,11 @@ function editFormForLine(contextIdx,componentIdx) {
 		}
 		
 		// handle enter key
-		if (e.keyCode===13) {
-			//console.log('ENTER KEY!!!');
-			// @@ need a clear way of interpreting this character
-			//	- is there a valid component
-			//	- are we not overreacting (e.g., keyboard selection of an ingredient match)
+		if (e.keyCode===13 && inputFieldHasKeyboardFocus) {
+			console.log('ENTER KEY!!!');
+			$('#doneButton'+$(this).data('lineid')).click();
 		}
-
+			
 		if (lineString.length > 1) {
 
 			var cursorPos = $(this).caret();
@@ -475,7 +540,7 @@ function editFormForLine(contextIdx,componentIdx) {
 					var lineID = thisGoddamnThing.data('lineid');
 					var searchResults = $('#rKeywordMatches'+lineID);
 					searchResults.empty();  // <--- could result in a bug since this is an anonymous function
-					var counter = 0;
+					var counter = -1;
 
 					if (msg.length>0) {
 						
@@ -485,7 +550,7 @@ function editFormForLine(contextIdx,componentIdx) {
 								//searchResults.append($('<li><a tabindex="-1" id="kwMatch'+i+'" data-val="'+msg[i].name+'" href="#">'+msg[i].name+' ('+msg[i].context+')</a></li>'));
 								if (msg[i].name.toLowerCase().indexOf(currentWord)===0) {
 									counter += 1;
-									searchResults.append($('<li><a tabindex="-1" id="kwMatch'+i+'" data-val="'+msg[i].name+'" href="#">'+msg[i].name+' ('+msg[i].context+')</a></li>'));
+									searchResults.append($('<li><a tabindex="-1" id="kwMatch'+counter+'" data-val="'+msg[i].name+'" href="#">'+msg[i].name+' ('+msg[i].context+')</a></li>'));
 								}
 							}
 						}
@@ -499,8 +564,9 @@ function editFormForLine(contextIdx,componentIdx) {
 							if (counter > 100) {
 								break;
 							}
-							searchResults.append($('<li><a tabindex="-1" id="kwMatch'+i+'" data-val="'+msg[i].name+'" href="#">'+msg[i].name+' ('+msg[i].context+')</a></li>'));
 							counter += 1;
+							searchResults.append($('<li><a tabindex="-1" id="kwMatch'+counter+'" data-val="'+msg[i].name+'" href="#">'+msg[i].name+' ('+msg[i].context+')</a></li>'));
+							
 						}
 
 						if (msg.length > counter) {
@@ -510,12 +576,12 @@ function editFormForLine(contextIdx,componentIdx) {
 						// click handler
 						searchResults.find('a').click(function(e) {
 							e.preventDefault();
+							searchResults.empty();
 							searchResults.hide();
 							inputField.val(lineString.replace(currentWord,$(this).data('val'))+' ');
 							inputField.caret(inputField.val().length);
-							var e = jQuery.Event("keyup");
-							e.which = 32; // # Some key code value
-							inputField.trigger(e);
+							inputField.focus();
+							e.stopImmediatePropagation();
 						});
 						
 						// add keyup/down support
@@ -525,6 +591,7 @@ function editFormForLine(contextIdx,componentIdx) {
 							if (e.keyCode === 38 && index > 0) index-- ;									   // up
 							if (e.keyCode === 40 && index < items.length - 1) index++   ;					 // down
 							if (!~index) index = 0;
+							inputFieldHasKeyboardFocus = false;
 							items[index].focus();
 						});
 
@@ -533,11 +600,13 @@ function editFormForLine(contextIdx,componentIdx) {
 					} else {
 						searchResults.empty();
 						searchResults.hide();
+						inputFieldHasKeyboardFocus = true;
 					}
 				});
 			} else {
 				searchResults.empty();
 				searchResults.hide();
+				inputFieldHasKeyboardFocus = true;
 			}
 
 			// server parsing
@@ -573,14 +642,14 @@ function editFormForLine(contextIdx,componentIdx) {
 						bits.push(data.rendering);
 
 						if (data.valid) {
-							bits.push('VALID');
+							$('#lineValid'+lineID).html('<i class="icon-ok-circle"></i>')
 							$('#doneButton'+lineID).addClass('btn-primary');
 						} else {
-							bits.push('INVALID');
+							$('#lineValid'+lineID).html('<i class="icon-ban-circle"></i>')
 							$('#doneButton'+lineID).removeClass('btn-primary');
 						}
 
-						$('#feedback'+lineID).text(bits.join());
+						$('#feedback'+lineID).html(bits.join());
 
 					}
 				});
