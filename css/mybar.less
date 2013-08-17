@@ -1,5 +1,9 @@
 // MyBar stuff (should probably move)
 
+body {
+  padding:0;
+}
+
 tr.section {
   background-color: none;
   border: none;
@@ -45,4 +49,43 @@ footer {
   border-top: 4px solid #ddd;
   padding-top: 18px;
   margin-top: 36px;
+  padding-left: 18px;
+  padding-right: 18px;
+}
+
+h1, h2, h3, p, ul, ol {
+  margin-left: 8px;
+  margin-right: 8px;
+}
+
+.btn-group{
+   margin-bottom: 9px;
+}
+
+ul {
+  list-style: none;
+}
+
+@media only screen and (min-width: 600px) {
+    /* Style adjustments for viewports that meet the condition */
+
+    body {
+      padding-left:18px;
+      padding-right:18px;
+    }
+
+    footer {
+      padding-left: 0;
+      padding-right: 0;
+    }
+
+    .btn-group {
+      margin-bottom: 0;
+    }
+
+    h1, h2, h3, p, ul, ol {
+      margin-left: 0;
+      margin-right: 0;
+    }
+
 }
