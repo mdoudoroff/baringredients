@@ -30,6 +30,12 @@ function filterAll() {
 	$.cookie('filtermode', 'all', { expires: 30, path: '/' });
 }
 
+function utcToLocaltimeStr(utcSeconds) {
+    var d = new Date(0);
+    d.setUTCSeconds(utcSeconds);
+    return d.toLocaleString();
+}
+
 jQuery(document).ready(function() {
 
 	console.log($.cookie());
@@ -51,6 +57,9 @@ jQuery(document).ready(function() {
 	if (c === 'nonalc') {$('#filternonalc').click();}
 	if (c === 'all') {$('#filternone').click();}
 
+	$('span[data-utc]').each(function(){
+		$(this).text(utcToLocaltimeStr($(this).data('utc')));
+	});
 
 });
 
