@@ -38,8 +38,6 @@ function utcToLocaltimeStr(utcSeconds) {
 
 jQuery(document).ready(function() {
 
-	console.log($.cookie());
-
 	$('#showAlphaReport').click(showAlphaReport);
 	$('#showGroupedReport').click(showGroupedReport);
 
@@ -49,19 +47,18 @@ jQuery(document).ready(function() {
 
 
 	var c = $.cookie().reportmode;
-	if (c === 'alpha') {$('#showAlphaReport').click();}
 	if (c === 'grouped') {$('#showGroupedReport').click();}
+	else {$('#showAlphaReport').click();}
+	
 
 	c = $.cookie().filtermode;
 	if (c === 'alc') {$('#filteralc').click();}
-	if (c === 'nonalc') {$('#filternonalc').click();}
-	if (c === 'all') {$('#filternone').click();}
+	else if (c === 'nonalc') {$('#filternonalc').click();}
+	else {$('#filternone').click();}
 
 	$('span[data-utc]').each(function(){
 		$(this).text(utcToLocaltimeStr($(this).data('utc')));
 	});
-
-	showAlphaReport();
 
 });
 
