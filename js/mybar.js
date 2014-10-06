@@ -1,6 +1,6 @@
 // @codekit-prepend "jquery.cookie.js";
 
-function showAlphaReport () {
+function showAlphaReport() {
 	$('#alphabeticalReport').show();
 	$('#groupedReport').hide();
 	$.cookie('reportmode', 'alpha', { expires: 30, path: '/' });
@@ -60,6 +60,8 @@ jQuery(document).ready(function() {
 	$('span[data-utc]').each(function(){
 		$(this).text(utcToLocaltimeStr($(this).data('utc')));
 	});
+
+	showAlphaReport();
 
 });
 
